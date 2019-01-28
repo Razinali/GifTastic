@@ -1,102 +1,121 @@
-function displayMovieInfo() {
+$(document).ready(function () {
 
-    // declaring initial array of topics of Diney movies
-    var topics = ['Frozen', 'The Lion King', 'Tangled', 'Peter Pan', 'Cinderella', 'Beauty and the Beast', 'Moana', 'Lady and the Tramp', 'Up'];
+    // Initial array of Disney movies
+    var topics = ['Frozen', 'The Lion King', 'Tangled', 'Peter Pan', 'Cinderella', 'Beauty and the Beast', 'Moana', 'The Princess and the Frog', 'Lady and the Tramp', 'Marry Poppins', 'Pocahontas'];
 
-    // var movie = $(this).attr("data-name");
-    var queryURL = 'https://api.giphy.com/v1/gifs/search?q=' + movie + '&api_key=WLKnOtwLbYAQXac3qWl9wBxw5tZKKbis&limit=10';
-    console.log(queryURL);
+    // displayInfo function re-renders the HTML to display the appropriate content
+    function displayInfo() {
+        $('#disney-view').empty();
+        var topic = $(this).attr('data-name');
+        var queryURL = 'https://api.giphy.com/v1/gifs/search?q=' + topic + '&api_key=WLKnOtwLbYAQXac3qWl9wBxw5tZKKbis&limit=10';
 
-    // Creating an AJAX call for the specific movie button being clicked
-    $.ajax({
-      url: queryURL,
-      method: "GET"
-    }).then(function(response) {
+        // Creating an AJAX call for the specific movie button being clicked
+        $.ajax({
+            url: queryURL,
+            method: "GET"
+        }).then(function (response) {
+            // If no information on topics is found, the alert the user
+            if (response.pagination.total_count == 0) {
+                alert('Sorry, there are no Gifs for this topic');
+                var itemindex = topics.indexOf(topic);
+                // otherwise display button
+                if (itemindex > -1) {
+                    topics.splice(itemindex, 1);
+                    renderButtons();
+                }
+            }
 
-      // Creating a div to hold the movie
-      var movieDiv = $("<div class='movie'>");
+            // Save response from API call (JSON) to a variable results
+            var results = response.data;
+            for (var j = 0; j < results.length; j++) {
+                // Creating a div to hold the movie
+                var newTopicDiv = $("<div class='disney-name'>");
+                // GIF Rating
+                var pRating = $('<p>').text('Rating: ' + results[j].rating.toUpperCase());
+                // GIF Title
+                var pTitle = $('<p>').text('Title: ' + results[j].title.toUpperCase());
+                // GIF URL
+                var gifURL = results[j].images.fixed_height_still.url;
+                var gif = $('<img>');
+                gif.attr('src', gifURL);
+                gif.attr('data-still', results[j].images.fixed_height_still.url);
+                gif.attr('data-animate', results[j].images.fixed_height.url);
+                gif.attr('data-state', 'still');
+                gif.addClass('animate-gif');
+                // Appending info 
+                newTopicDiv.append(pRating);
+                newTopicDiv.append(pTitle);
+                newTopicDiv.append(gif);
+                // Putting the saved info to new div
+                $('#disney-view').prepend(newTopicDiv);
+            }
+        });
+    };
 
-      // Storing the rating data
-      var rating = response.Rated;
+    // Function for displaying movie data
+    function renderButtons() {
+        // Deletes the movies prior to adding new movies
+        $('.buttons-view').empty();
+        // Loops through the array of topics to create buttons for all topics
+        for (var i = 0; i < topics.length; i++) {
+            var createButtons = $('<button>');
+            // Adding a class of movie-btn to our button
+            createButtons.addClass('topic btn btn-info');
+            // Adding a data-attribute
+            createButtons.attr('data-name', topics[i]);
+            // Providing the initial button tex
+            createButtons.text(topics[i]);
+            // Adding the button to the buttons-view div
+            $('.buttons-view').append(createButtons);
+        }
+    }
 
-      // Creating an element to have the rating displayed
-      var pOne = $("<p>").text("Rating: " + rating);
+    // Function to remove buttons
+    function removeButton() {
+        $("#disney-view").empty();
+        var topic = $(this).attr('data-name');
+        var itemindex = topics.indexOf(topic);
+        if (itemindex > -1) {
+            topics.splice(itemindex, 1);
+            renderButtons();
+        }
+    }
 
-      // Displaying the rating
-      movieDiv.append(pOne);
+    // Function to play or still Gif images
+    function playGif() {
+        var state = $(this).attr('data-state');
+        if (state === 'still') {
+            $(this).attr('src', $(this).attr('data-animate'));
+            $(this).attr('data-state', 'animate');
+        }
+        else {
+            $(this).attr('src', $(this).attr('data-still'));
+            $(this).attr('data-state', 'still');
+        }
+    }
 
-      // Storing the release year
-      var released = response.Released;
-
-      // Creating an element to hold the release year
-      var pTwo = $("<p>").text("Released: " + released);
-
-      // Displaying the release year
-      movieDiv.append(pTwo);
-
-      // Storing the plot
-      var plot = response.Plot;
-
-      // Creating an element to hold the plot
-      var pThree = $("<p>").text("Plot: " + plot);
-
-      // Appending the plot
-      movieDiv.append(pThree);
-
-      // Retrieving the URL for the image
-      var imgURL = response.Poster;
-
-      // Creating an element to hold the image
-      var image = $("<img>").attr("src", imgURL);
-
-      // Appending the image
-      movieDiv.append(image);
-
-      // Putting the entire movie above the previous movies
-      $("#movies-view").prepend(movieDiv);
+    // Click on the submit button to add a new disney button
+    $("#add-disney").on("click", function (event) {
+        event.preventDefault();
+        // This line grabs the input from the form
+        var disney = $("#disney-input").val().trim();
+        // check if topic exsits already
+        if (topics.toString().toLowerCase().indexOf(disney.toLowerCase()) != -1) {
+            alert("Topic already exists");
+        }
+        else {
+            topics.push(disney);
+            renderButtons();
+        }
     });
 
-  }
+    // Click on disney button to display Gifs and other info from API
+    $(document).on("click", ".topic", displayInfo);
+    // Click on the Gif image to animate or make it still
+    $(document).on("click", ".animate-gif", playGif);
 
-  // Function for displaying movie data
-  function renderButtons() {
-
-    // Deleting the movies prior to adding new movies
-    // (this is necessary otherwise you will have repeat buttons)
-    $("#buttons-view").empty();
-
-    // Looping through the array of movies
-    for (var i = 0; i < movies.length; i++) {
-
-      // Then dynamicaly generating buttons for each movie in the array
-      // This code $("<button>") is all jQuery needs to create the beginning and end tag. (<button></button>)
-      var a = $("<button>");
-      // Adding a class of movie-btn to our button
-      a.addClass("movie-btn");
-      // Adding a data-attribute
-      a.attr("data-name", movies[i]);
-      // Providing the initial button text
-      a.text(movies[i]);
-      // Adding the button to the buttons-view div
-      $("#buttons-view").append(a);
-    }
-  }
-
-  // This function handles events where a movie button is clicked
-  $("#add-movie").on("click", function(event) {
-    event.preventDefault();
-    // This line grabs the input from the textbox
-    var movie = $("#movie-input").val().trim();
-
-    // Adding movie from the textbox to our array
-    movies.push(movie);
-
-    // Calling renderButtons which handles the processing of our movie array
+    // Calling renderButtons which handles the processing of our topic/movie array
     renderButtons();
-  });
 
-  // Adding a click event listener to all elements with a class of "movie-btn"
-  $(document).on("click", ".movie-btn", displayMovieInfo);
 
-  // Calling the renderButtons function to display the intial buttons
-  renderButtons();
+}); 
