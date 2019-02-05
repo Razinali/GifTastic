@@ -49,8 +49,16 @@ h1 {
 .disney-name{
     margin: 20px;
     float: left;
-} */
+    background-color: black;
 
+} 
+
+#disney-view {
+    text-align:center;
+    display:block;
+    display: grid-center;
+    justify-content: center;
+}
 p {
     color:rgb(236, 233, 227);
     margin-top: 20px;
@@ -60,5 +68,6 @@ p {
 img {
     border-radius: 20px;
     margin-top: 2px;
-} 
+
+}   
 
